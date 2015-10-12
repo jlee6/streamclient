@@ -1,3 +1,4 @@
 [submodule "libs/exoplayer"]
 	path = libs/exoplayer
 	url = https://github.com/google/ExoPlayer.git
+	ignore = all
