@@ -1,1 +1,4 @@
+include ':library'
 include ':app'
+
+project(':library').projectDir = new File(settingsDir, 'libs/exoplayer/library/')
