@@ -7,8 +7,19 @@ import android.os.Bundle;
 import com.jlee.mobile.stream.Constants;
 
 public class FragmentFactory {
-    public static Fragment createNewFragment(FragmentType type, String param1, String param2, int id) {
-        NewStreamFragment fragment = new NewStreamFragment();
+    public static Fragment createNewFragment(FragmentType type, String param1, String param2, int id) throws IllegalArgumentException {
+        Fragment fragment;
+        switch (type) {
+            case FragmentOne:
+                fragment = new ViewStreamFragment();
+                break;
+            case FragmentTwo:
+                fragment = new NewStreamFragment();
+                break;
+            default:
+                throw new IllegalArgumentException("invalid fragment type");
+        }
+
         Bundle args = new Bundle();
         args.putString(Constants.ARGUMENT_URI, param1);
         args.putString(Constants.ARGUMENT_ID, param2);

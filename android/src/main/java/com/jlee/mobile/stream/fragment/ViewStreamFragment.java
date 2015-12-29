@@ -51,117 +51,14 @@ public class ViewStreamFragment extends Fragment {
 //        private Button retryButton;
 
     private static final String TAG = ViewStreamFragment.class.getName();
-    DemoPlayer.Id3MetadataListener metadataListener = new DemoPlayer.Id3MetadataListener() {
-        @Override
-        public void onId3Metadata(Map<String, Object> metadata) {
-            for (Map.Entry<String, Object> entry : metadata.entrySet()) {
-                if (TxxxMetadata.TYPE.equals(entry.getKey())) {
-                    TxxxMetadata txxxMetadata = (TxxxMetadata) entry.getValue();
-                    Log.i(TAG, String.format("ID3 TimedMetadata %s: description=%s, value=%s",
-                            TxxxMetadata.TYPE, txxxMetadata.description, txxxMetadata.value));
-                } else if (PrivMetadata.TYPE.equals(entry.getKey())) {
-                    PrivMetadata privMetadata = (PrivMetadata) entry.getValue();
-                    Log.i(TAG, String.format("ID3 TimedMetadata %s: owner=%s",
-                            PrivMetadata.TYPE, privMetadata.owner));
-                } else if (GeobMetadata.TYPE.equals(entry.getKey())) {
-                    GeobMetadata geobMetadata = (GeobMetadata) entry.getValue();
-                    Log.i(TAG, String.format("ID3 TimedMetadata %s: mimeType=%s, filename=%s, description=%s",
-                            GeobMetadata.TYPE, geobMetadata.mimeType, geobMetadata.filename,
-                            geobMetadata.description));
-                } else {
-                    Log.i(TAG, String.format("ID3 TimedMetadata %s", entry.getKey()));
-                }
-            }
-        }
-    };
 
     private MediaController mediaController;
     private SurfaceView surfaceView;
 
     private DemoPlayer player;
-    SurfaceHolder.Callback surfaceHolder = new SurfaceHolder.Callback() {
-        @Override
-        public void surfaceCreated(SurfaceHolder surfaceHolder) {
-            if (player != null) {
-                player.setSurface(surfaceHolder.getSurface());
-            }
-        }
-
-        @Override
-        public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-            // Nothing
-        }
-
-        @Override
-        public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-            if (player != null) {
-                player.blockingClearSurface();
-            }
-        }
-    };
 
     private DebugTextViewHelper debugViewHelper;
     private boolean playerNeedsPrepare;
-
-    DemoPlayer.Listener playerListener = new DemoPlayer.Listener() {
-        @Override
-        public void onStateChanged(boolean playWhenReady, int playbackState) {
-            if (playbackState == ExoPlayer.STATE_ENDED) {
-//                showControls();
-            }
-
-            String text = "playWhenReady=" + playWhenReady + ", playbackState=";
-            switch (playbackState) {
-                case ExoPlayer.STATE_BUFFERING:
-                    text += "buffering";
-                    break;
-                case ExoPlayer.STATE_ENDED:
-                    text += "ended";
-                    break;
-                case ExoPlayer.STATE_IDLE:
-                    text += "idle";
-                    break;
-                case ExoPlayer.STATE_PREPARING:
-                    text += "preparing";
-                    break;
-                case ExoPlayer.STATE_READY:
-                    text += "ready";
-                    break;
-                default:
-                    text += "unknown";
-                    break;
-            }
-
-//            playerStateTextView.setText(text);
-        }
-
-        @Override
-        public void onError(Exception e) {
-            if (e instanceof UnsupportedDrmException) {
-                // Special case DRM failures.
-                UnsupportedDrmException unsupportedDrmException = (UnsupportedDrmException) e;
-//                int stringId = Util.SDK_INT < 18 ? R.string.drm_error_not_supported
-//                        : unsupportedDrmException.reason == UnsupportedDrmException.REASON_UNSUPPORTED_SCHEME
-//                        ? R.string.drm_error_unsupported_scheme : R.string.drm_error_unknown;
-
-                String error = Util.SDK_INT < 18 ? "DRM is not supported in this version"
-                        : unsupportedDrmException.reason == UnsupportedDrmException.REASON_UNSUPPORTED_SCHEME
-                        ? "Unsupported DRM scheme" : "Unknown DRM scheme";
-                Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
-            }
-
-//          playerNeedsPrepare = true;
-//            updateButtonVisibilities();
-//            showControls();
-        }
-
-        @Override
-        public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-//            shutterView.setVisibility(View.GONE);
-//            videoFrame.setAspectRatio(
-//                    height == 0 ? 1 : (width * pixelWidthAspectRatio) / height);
-        }
-    };
 
     private long playerPosition;
     private boolean enableBackgroundAudio;
@@ -534,8 +431,6 @@ public class ViewStreamFragment extends Fragment {
         player.setPlayWhenReady(playWhenReady);
     }
 
-    ;
-
     private void releasePlayer() {
         if (player != null) {
             debugViewHelper.stop();
@@ -546,7 +441,104 @@ public class ViewStreamFragment extends Fragment {
         }
     }
 
-    ;
+
+    DemoPlayer.Id3MetadataListener metadataListener = (Map<String, Object> metadata) -> {
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+            if (TxxxMetadata.TYPE.equals(entry.getKey())) {
+                TxxxMetadata txxxMetadata = (TxxxMetadata) entry.getValue();
+                Log.i(TAG, String.format("ID3 TimedMetadata %s: description=%s, value=%s",
+                        TxxxMetadata.TYPE, txxxMetadata.description, txxxMetadata.value));
+            } else if (PrivMetadata.TYPE.equals(entry.getKey())) {
+                PrivMetadata privMetadata = (PrivMetadata) entry.getValue();
+                Log.i(TAG, String.format("ID3 TimedMetadata %s: owner=%s",
+                        PrivMetadata.TYPE, privMetadata.owner));
+            } else if (GeobMetadata.TYPE.equals(entry.getKey())) {
+                GeobMetadata geobMetadata = (GeobMetadata) entry.getValue();
+                Log.i(TAG, String.format("ID3 TimedMetadata %s: mimeType=%s, filename=%s, description=%s",
+                        GeobMetadata.TYPE, geobMetadata.mimeType, geobMetadata.filename,
+                        geobMetadata.description));
+            } else {
+                Log.i(TAG, String.format("ID3 TimedMetadata %s", entry.getKey()));
+            }
+        }
+    };
+
+    SurfaceHolder.Callback surfaceHolderCallback = new SurfaceHolder.Callback() {
+        @Override
+        public void surfaceCreated(SurfaceHolder surfaceHolder) {
+            if (player != null) {
+                player.setSurface(surfaceHolder.getSurface());
+            }
+        }
+
+        @Override
+        public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+            // Nothing
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+            if (player != null) {
+                player.blockingClearSurface();
+            }
+        }
+    };
+
+    DemoPlayer.Listener playerListener = new DemoPlayer.Listener() {
+        @Override
+        public void onStateChanged(boolean playWhenReady, int playbackState) {
+            if (playbackState == ExoPlayer.STATE_ENDED) {
+//                showControls();
+            }
+
+            String text = "playWhenReady=" + playWhenReady + ", playbackState=";
+            switch (playbackState) {
+                case ExoPlayer.STATE_BUFFERING:
+                    text += "buffering";
+                    break;
+                case ExoPlayer.STATE_ENDED:
+                    text += "ended";
+                    break;
+                case ExoPlayer.STATE_IDLE:
+                    text += "idle";
+                    break;
+                case ExoPlayer.STATE_PREPARING:
+                    text += "preparing";
+                    break;
+                case ExoPlayer.STATE_READY:
+                    text += "ready";
+                    break;
+                default:
+                    text += "unknown";
+                    break;
+            }
+
+//            playerStateTextView.setText(text);
+        }
+
+        @Override
+        public void onError(Exception e) {
+            if (e instanceof UnsupportedDrmException) {
+                // Special case DRM failures.
+                UnsupportedDrmException unsupportedDrmException = (UnsupportedDrmException) e;
+                String error = Util.SDK_INT < 18 ? "DRM is not supported in this version"
+                        : unsupportedDrmException.reason == UnsupportedDrmException.REASON_UNSUPPORTED_SCHEME
+                        ? "Unsupported DRM scheme" : "Unknown DRM scheme";
+                Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
+            }
+
+//          playerNeedsPrepare = true;
+//            updateButtonVisibilities();
+//            showControls();
+        }
+
+        @Override
+        public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+//            shutterView.setVisibility(View.GONE);
+//            videoFrame.setAspectRatio(
+//                    height == 0 ? 1 : (width * pixelWidthAspectRatio) / height);
+        }
+    };
 
 //        private void configureSubtitleView() {
 //            CaptionStyleCompat style;
