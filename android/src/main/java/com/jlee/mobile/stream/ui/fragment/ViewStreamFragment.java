@@ -1,9 +1,10 @@
-package com.jlee.mobile.stream.fragment;
+package com.jlee.mobile.stream.ui.fragment;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
@@ -25,59 +26,53 @@ import com.google.android.exoplayer.drm.UnsupportedDrmException;
 import com.google.android.exoplayer.metadata.GeobMetadata;
 import com.google.android.exoplayer.metadata.PrivMetadata;
 import com.google.android.exoplayer.metadata.TxxxMetadata;
-import com.google.android.exoplayer.util.DebugTextViewHelper;
 import com.google.android.exoplayer.util.Util;
 import com.jlee.mobile.stream.Constants;
 import com.jlee.mobile.stream.R;
+import com.jlee.mobile.stream.module.StreamEndPoint;
 
 import java.util.Map;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * A google exo player based adaptive stream viewer
  */
-public class ViewStreamFragment extends Fragment {
-//        private EventLogger eventLogger;
-//        private View debugRootView;
-//        private View shutterView;
-//        private AspectRatioFrameLayout videoFrame;
-//        private TextView debugTextView;
-//        private TextView playerStateTextView;
-//        private SubtitleLayout subtitleLayout;
-//        private Button videoButton;
-//        private Button audioButton;
-//        private Button textButton;
-//        private Button retryButton;
-
+public class ViewStreamFragment extends BaseFragment {
     private static final String TAG = ViewStreamFragment.class.getName();
 
-    private MediaController mediaController;
-    private SurfaceView surfaceView;
+    @Bind(R.id.surface_view)
+    SurfaceView surfaceView;
 
+    @Bind(R.id.fab)
+    FloatingActionButton btnFloat;
+
+    private Context context;
+
+    private MediaController mediaController;
     private DemoPlayer player;
 
-    private DebugTextViewHelper debugViewHelper;
-    private boolean playerNeedsPrepare;
-
     private long playerPosition;
-    private boolean enableBackgroundAudio;
+    private boolean playerNeedsPrepare;
+    private StreamEndPoint content;
 
-    private int contentType;
-    private Uri contentUri;
-    private String contentId;
-    private Context context;
+    public ViewStreamFragment() {
+        fragmentId = "view stream fragment";
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (getArguments() != null) {
-            contentId = getArguments().getString(Constants.ARGUMENT_ID);
-            contentType = getArguments().getInt(Constants.ARGUMENT_TYPE);
-
-            contentUri = Uri.parse(getArguments().getString(Constants.ARGUMENT_URI));
+            content = getArguments().getParcelable(Constants.ARGUMENT_CONTENT);
         }
+
+        content = new StreamEndPoint(Constants.TYPE_HLS, "Apple master playlist",
+//                Uri.parse("https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8"));
+        Uri.parse("https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"));
+//        Uri.parse("https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/gear0/prog_index.m3u8"));
     }
 
     @Override
@@ -88,105 +83,19 @@ public class ViewStreamFragment extends Fragment {
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_view_stream, container, false);
-        ButterKnife.bind(view);
+        ButterKnife.bind(this, view);
 
+        surfaceView.getHolder().addCallback(surfaceHolderCallback);
+
+        mediaController = new MediaController(context);
+        mediaController.setAnchorView(view);
         return view;
     }
 
-//        // OnClickListener methods
-//
-//        @Override
-//        public void onClick(View view) {
-//            if (view == retryButton) {
-//                preparePlayer(true);
-//            }
-//        }
-//
-//        // AudioCapabilitiesReceiver.Listener methods
-//
-//        @Override
-//        public void onAudioCapabilitiesChanged(AudioCapabilities audioCapabilities) {
-//            if (player == null) {
-//                return;
-//            }
-//            boolean backgrounded = player.getBackgrounded();
-//            boolean playWhenReady = player.getPlayWhenReady();
-//            releasePlayer();
-//            preparePlayer(playWhenReady);
-//            player.setBackgrounded(backgrounded);
-//        }
-//
-    // Internal methods
-
-
-    //        private AudioCapabilitiesReceiver audioCapabilitiesReceiver;
-//
-//        // Activity lifecycle
-//
-//        @Override
-//        public void onCreate(Bundle savedInstanceState) {
-//            super.onCreate(savedInstanceState);
-//
-//            Intent intent = getIntent();
-//            contentUri = intent.getData();
-//            contentType = intent.getIntExtra(CONTENT_TYPE_EXTRA, -1);
-//            contentId = intent.getStringExtra(CONTENT_ID_EXTRA);
-//
-//            setContentView(R.layout.player_activity);
-//            View root = findViewById(R.id.root);
-//            root.setOnTouchListener(new OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View view, MotionEvent motionEvent) {
-//                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-//                        toggleControlsVisibility();
-//                    } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-//                        view.performClick();
-//                    }
-//                    return true;
-//                }
-//            });
-//            root.setOnKeyListener(new OnKeyListener() {
-//                @Override
-//                public boolean onKey(View v, int keyCode, KeyEvent event) {
-//                    if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU) {
-//                        return false;
-//                    }
-//                    return mediaController.dispatchKeyEvent(event);
-//                }
-//            });
-//
-//            shutterView = findViewById(R.id.shutter);
-//            debugRootView = findViewById(R.id.controls_root);
-//
-//            videoFrame = (AspectRatioFrameLayout) findViewById(R.id.video_frame);
-//            surfaceView = (SurfaceView) findViewById(R.id.surface_view);
-//            surfaceView.getHolder().addCallback(this);
-//            debugTextView = (TextView) findViewById(R.id.debug_text_view);
-//
-//            playerStateTextView = (TextView) findViewById(R.id.player_state_view);
-//            subtitleLayout = (SubtitleLayout) findViewById(R.id.subtitles);
-//
-//            mediaController = new MediaController(this);
-//            mediaController.setAnchorView(root);
-//            retryButton = (Button) findViewById(R.id.retry_button);
-//            retryButton.setOnClickListener(this);
-//            videoButton = (Button) findViewById(R.id.video_controls);
-//            audioButton = (Button) findViewById(R.id.audio_controls);
-//            textButton = (Button) findViewById(R.id.text_controls);
-//
-//            CookieHandler currentHandler = CookieHandler.getDefault();
-//            if (currentHandler != defaultCookieManager) {
-//                CookieHandler.setDefault(defaultCookieManager);
-//            }
-//
-//            audioCapabilitiesReceiver = new AudioCapabilitiesReceiver(this, this);
-//            audioCapabilitiesReceiver.register();
-//        }
-//
     @Override
     public void onResume() {
         super.onResume();
-//            configureSubtitleView();
+
         if (player == null) {
             preparePlayer(true);
         } else {
@@ -197,43 +106,33 @@ public class ViewStreamFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (!enableBackgroundAudio) {
-            releasePlayer();
-        } else {
-            player.setBackgrounded(true);
-        }
-
-//            shutterView.setVisibility(View.VISIBLE);
+        releasePlayer();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-//            audioCapabilitiesReceiver.unregister();
         releasePlayer();
     }
 
-    private DemoPlayer.RendererBuilder getRendererBuilder() {
+    private DemoPlayer.RendererBuilder getRendererBuilder(StreamEndPoint endPoint) {
         String userAgent = Util.getUserAgent(context, "ExoPlayerDemo");
-        switch (contentType) {
+        switch (endPoint.getTypeId()) {
             case Constants.TYPE_SS:
-                return new SmoothStreamingRendererBuilder(context, userAgent, contentUri.toString(),
+                return new SmoothStreamingRendererBuilder(context, userAgent, endPoint.getUri().toString(),
                         new SmoothStreamingTestMediaDrmCallback());
             case Constants.TYPE_DASH:
-                return new DashRendererBuilder(context, userAgent, contentUri.toString(),
-                        new WidevineTestMediaDrmCallback(contentId));
+                return new DashRendererBuilder(context, userAgent, endPoint.getUri().toString(),
+                        new WidevineTestMediaDrmCallback(String.valueOf(endPoint.getTypeId())));
             case Constants.TYPE_HLS:
-                return new HlsRendererBuilder(context, userAgent, contentUri.toString());
+                return new HlsRendererBuilder(context, userAgent, endPoint.getUri().toString());
             case Constants.TYPE_OTHER:
-                return new ExtractorRendererBuilder(context, userAgent, contentUri);
+                return new ExtractorRendererBuilder(context, userAgent, endPoint.getUri());
             default:
-                throw new IllegalStateException("Unsupported type: " + contentType);
+                throw new IllegalStateException("Unsupported type: " + endPoint.getTypeId());
         }
     }
-
-    ;
-
 
 //        // User controls
 //        private void updateButtonVisibilities() {
@@ -410,31 +309,27 @@ public class ViewStreamFragment extends Fragment {
 
     private void preparePlayer(boolean playWhenReady) {
         if (player == null) {
-            player = new DemoPlayer(getRendererBuilder());
+            player = new DemoPlayer(getRendererBuilder(content));
+
             player.addListener(playerListener);
-//                player.setCaptionListener();
             player.setMetadataListener(metadataListener);
             player.seekTo(playerPosition);
             playerNeedsPrepare = true;
+
             mediaController.setMediaPlayer(player.getPlayerControl());
             mediaController.setEnabled(true);
-
-//                player.addListener(eventLogger);
-//                player.setInfoListener(eventLogger);
-//                player.setInternalErrorListener(eventLogger);
         }
         if (playerNeedsPrepare) {
             player.prepare();
             playerNeedsPrepare = false;
         }
+
         player.setSurface(surfaceView.getHolder().getSurface());
         player.setPlayWhenReady(playWhenReady);
     }
 
     private void releasePlayer() {
         if (player != null) {
-            debugViewHelper.stop();
-            debugViewHelper = null;
             playerPosition = player.getCurrentPosition();
             player.release();
             player = null;
@@ -501,9 +396,11 @@ public class ViewStreamFragment extends Fragment {
                     break;
                 case ExoPlayer.STATE_IDLE:
                     text += "idle";
+                    btnFloat.setImageDrawable(context.getDrawable(R.drawable.ic_play_circle_outline_black));
                     break;
                 case ExoPlayer.STATE_PREPARING:
                     text += "preparing";
+                    btnFloat.setImageDrawable(context.getDrawable(R.drawable.ic_pause_circle_outline_black));
                     break;
                 case ExoPlayer.STATE_READY:
                     text += "ready";
@@ -513,6 +410,7 @@ public class ViewStreamFragment extends Fragment {
                     break;
             }
 
+            Log.wtf(TAG, String.format("Player state: %s", text));
 //            playerStateTextView.setText(text);
         }
 
@@ -569,4 +467,11 @@ public class ViewStreamFragment extends Fragment {
 //        }
 //
 //    }
+
+    @OnClick(R.id.fab)
+    void onShowFabSnackbar(View view) {
+        Snackbar.make(view, "Snack bar tied to floating action button", Snackbar.LENGTH_LONG)
+                .setAction("Action", null)
+                .show();
+    }
 }

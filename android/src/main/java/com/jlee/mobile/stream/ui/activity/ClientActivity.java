@@ -1,21 +1,22 @@
-package com.jlee.mobile.stream;
+package com.jlee.mobile.stream.ui.activity;
 
 import android.animation.LayoutTransition;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.SearchView;
+
+import com.jlee.mobile.stream.R;
+import com.jlee.mobile.stream.ui.fragment.BaseFragment;
+import com.jlee.mobile.stream.ui.fragment.FragmentFactory;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 
 public class ClientActivity extends AppCompatActivity {
-
     @Bind(R.id.toolbar)
     Toolbar toolbar;
     @Bind(R.id.search_bar)
@@ -29,6 +30,8 @@ public class ClientActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
         searchView.setLayoutTransition(new LayoutTransition());
+
+        setViewFragment(FragmentFactory.FragmentType.Viewer);
     }
 
     @Override
@@ -45,7 +48,6 @@ public class ClientActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -53,9 +55,12 @@ public class ClientActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @OnClick(R.id.fab)
-    void onShowFabSnackbar(View view) {
-        Snackbar.make(view, "Snack bar tied to floating action button", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
+    private void setViewFragment(FragmentFactory.FragmentType type) {
+        BaseFragment fragment = FragmentFactory.createNewFragment(type);
+
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        transaction.replace(R.id.fl_fragment_container, fragment);
+        transaction.addToBackStack(fragment.getFragmentId());
+        transaction.commit();
     }
 }

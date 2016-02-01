@@ -1,6 +1,5 @@
-package com.jlee.mobile.stream.fragment;
+package com.jlee.mobile.stream.ui.fragment;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,10 +15,10 @@ import com.google.android.gms.plus.PlusOneButton;
  * Activities that contain this fragment must implement the
  * {@link FragmentFactory.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link FragmentFactory#createNewFragment(FragmentFactory.FragmentType, String, String, int)}
+ * Use the {@link FragmentFactory#createNewFragment(FragmentFactory.FragmentType)}
  * factory method to create an instance of this fragment.
  */
-public class NewStreamFragment extends Fragment {
+public class NewStreamFragment extends BaseFragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -36,7 +35,7 @@ public class NewStreamFragment extends Fragment {
     private FragmentFactory.OnFragmentInteractionListener listener;
 
     public NewStreamFragment() {
-        // Required empty public constructor
+        fragmentId = "new stream fragment";
     }
 
     @Override

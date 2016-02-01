@@ -1,37 +1,34 @@
-package com.jlee.mobile.stream.fragment;
+package com.jlee.mobile.stream.ui.fragment;
 
-import android.app.Fragment;
 import android.net.Uri;
-import android.os.Bundle;
-
-import com.jlee.mobile.stream.Constants;
 
 public class FragmentFactory {
-    public static Fragment createNewFragment(FragmentType type, String param1, String param2, int id) throws IllegalArgumentException {
-        Fragment fragment;
+    public enum FragmentType {
+        Viewer,
+        Creator,
+    }
+
+    public static BaseFragment createNewFragment(FragmentType type)
+            throws IllegalArgumentException {
+        BaseFragment fragment;
         switch (type) {
-            case FragmentOne:
+            case Viewer:
                 fragment = new ViewStreamFragment();
                 break;
-            case FragmentTwo:
+            case Creator:
                 fragment = new NewStreamFragment();
                 break;
             default:
                 throw new IllegalArgumentException("invalid fragment type");
         }
 
-        Bundle args = new Bundle();
-        args.putString(Constants.ARGUMENT_URI, param1);
-        args.putString(Constants.ARGUMENT_ID, param2);
-        args.putInt(Constants.ARGUMENT_TYPE, id);
-        fragment.setArguments(args);
+//        Bundle args = new Bundle();
+//        args.putString(Constants.ARGUMENT_URI, param1);
+//        args.putString(Constants.ARGUMENT_ID, param2);
+//        args.putInt(Constants.ARGUMENT_TYPE, id);
+//        fragment.setArguments(args);
 
         return fragment;
-    }
-
-    public enum FragmentType {
-        FragmentOne,
-        FragmentTwo,
     }
 
     /**

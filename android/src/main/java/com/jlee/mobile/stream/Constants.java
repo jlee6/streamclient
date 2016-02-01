@@ -1,6 +1,7 @@
 package com.jlee.mobile.stream;
 
 public class Constants {
+    public static final String ARGUMENT_CONTENT = "CONTENTS";
     public static final String ARGUMENT_URI = "CONTENTS_URI";
     public static final String ARGUMENT_ID = "CONTENTS_URI";
     public static final String ARGUMENT_TYPE = "CONTENTS_TYPE";
